@@ -7,21 +7,23 @@ const async  = require('async');
 const chalk = require('chalk');
 const debug = require('debug')('url-checker');
 
-const URLS = 'urls.yml';
-const MAX_PARALLEL_REQUESTS = 10;
-
-// init environment
+// init process environment
 require('dotenv').config();
-const SSO_URL = process.env.SSO_URL || 'https://localhost/login';
+const SSO_URL = process.env.SSO_URL;
 const LOGIN = process.env.LOGIN || 'admin';
 const PASSWORD = process.env.PASSWORD || 'passw0rd';
+const MAX_PARALLEL_REQUESTS = process.env.MAX_PARALLEL_REQUESTS || 10;
+const URLS_FILE = process.env.URLS_FILE || 'urls.yml';
 
 let errors = [];
 
 (function main() {
-  let urls;
+  let urlsFile = URLS_FILE;
+  if (process.argv.length > 2)
+    urlsFile = process.argv[2];
+
   try {
-    urls = yaml.safeLoad(fs.readFileSync(URLS, 'utf8'));
+    var urls = yaml.safeLoad(fs.readFileSync(urlsFile, 'utf8'));
   } catch (e) {
     return done(e);
   }
@@ -96,8 +98,6 @@ function authenticate(login, password, callback) {
         'return_to': ''
       })
       .end((err, result) => {
-        // console.log(result);
-
         if (err && err.status === 303) err = null;
         callback(err, retrieveCookies(result));
       });
